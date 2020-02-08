@@ -1,0 +1,138 @@
+spark基本工作原理和RDD
+
+mapreduce分两个阶段，但spark分n个阶段，主要在内存中进行
+
+rdd在逻辑上，其实是代表了一个hdfs文件，但本质上是分区的(partition),每个partition默认是存放在内存上的，但如果
+内存放不下，会使用磁盘存储，这就是弹性。
+rdd提供了容错性，如果某个节点partition出故障了，会从数据来源重新计算
+
+driver执行程序，会提交大量的task，到之前注册过的worker端的executor上执行
+
+object LineCount{
+	def main(args:Array[String]){
+		val conf = new SparkConf().setAppName("LineCount").setMaster("local")
+		val sc = new SparkConf(conf)
+
+		val lines = sc.textFile("hsfs.txt")
+		val pairs = lines.map(line => (line,1))
+		val lineCounts = pairs.reduceByKey(_+_)
+
+		lineCount.foreach(x=>println(x._1+"appears " + x._2 + " times"))
+		sc.close()
+	}
+}
+
+transformation操作实战  
+1.map  
+2.filter
+3.flatMap
+4.groupByKey
+5.reduceByKey
+6.sortByKey
+7.Join
+8.cogroup
+
+'''
+pullic class TransformationOperation{
+	public static void main(){
+		SparkConf = new SparkConf().setMaster("local").setAppName("map");
+		JavaSparkContext sc = new JavaSparkContext(conf);
+
+		List<Integer> numbers = Arrays.asList(1,2,3,4,5);
+
+		JavaRDD<Integer> numberRDD = sc.parallelize(numbers);
+
+		// map 操作
+		JavaRDD<Integer> multiply2RDD = numberRDD.map(
+			new Function<Integer,Integer>(){
+				public static final long serialVersionUID = 1L;
+
+				@Override
+				public Integer call(Integer v1) throws Exception{
+					return v1*2;
+				}
+			}
+
+		)
+		// filter 找出偶数
+		JavaRDD<Integer> evenNumberRDD = numberRDD.filter(
+			new Function<Integer,Boolean>(){
+				private static long serialVersionUID = 1L;
+
+				@Override 
+				public Boolean call(Integer v1) throws Exception{
+					return v1 % 2 == 0;
+				}
+			}
+		)
+
+		List<String> lineList = Arrays.asList("hello you", "hellp me");
+
+		JavaRDD<String> flatRDD = sc.parallelize(lineList);
+		/*
+		flatMap接受RDD中的每一个元素，并进行各种逻辑的计算和处理，并返回多个元素
+		flatMap接受的输入类型为RDD元素类型，返回的类型为Iterable<U>
+		经过flatMap操作后，新的RDD的类型>=旧的RDD的类型
+		*/
+		JavaRDD<String> words = lines.flatMap(
+			new FlatMapFunction<String,String>(){
+				public static final long serialVersionUID = 1L;
+
+				@Override
+				public String call(String v1) throws Exception{
+					return Arrays.asList(v1.split(" "));
+				}
+
+			}
+
+		)
+
+		//groupBykey输出：<U,Iterable<T>>
+		List<Tuple2<String,Integer>> scoreList = Arrays.asList(
+			new Tuple2<String,Integer>("class1",80),
+			new Tuple2<String,Integer>("class2",90),
+			new Tuple2<String,Integer>("class1",70)
+		);
+		JavaPairRDD<String,Integer> scores = sc.parallelizePairs(scoreList);
+		JavaPairRDD<String,Tuple2<String,Iterable<Integer>>> groupedScores = scores.groupByKey();
+
+
+		//reduceByKey
+		JavaPairRDD<String,Tuple2<String,Iterable<Integer>>> totalScores = scores.reduceByKey(
+			new Function2<Integer,Integer,Integer>(){
+				private static final long sericalVersionUID = 1L;
+				@Override 
+				public Integer call(Integer v1,Integer v2) throws Exception{
+					return v1+v2;
+				}
+			}
+		);
+
+		//sortByKey 基于key进行排序，从小到大
+
+
+		//join
+		List<Tuple2<Integer,String>> studentList = Arrays.asList(
+			new Tuple2<Integer,String>(1,"class1"),
+			new Tuple2<Integer,String>(2,"class2"),
+			new Tuple2<Integer,String>(3,"class3")
+		);
+		List<Tuple2<Integer,Integer>> scoreList = Arrays.asList(
+			new Tuple2<Integer,Integer>(1,100),
+			new Tuple2<Integer,Integer>(2,90),
+			new Tuple2<Integer,Integer>(3,70)
+		);
+
+		JavaPairRDD<String,Integer> students = sc.parallelizePairs(studentList);
+		JavaPairRDD<String,Integer> scores = sc.parallelizePairs(scoreList);
+
+		JavaPairRDD<Integer,Tuple2<String,Integer>> studentScores = students.join(scores);
+
+
+		//cogroup类似join,但是是将多条集合的value凑合成一条了
+		sc.close()
+
+	}
+}
+'''
+
