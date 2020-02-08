@@ -1,0 +1,22 @@
+RDD持久化不建议使用Disk选项，最优的是Memory_only，害怕内存不够的话就加序列化，可以考虑_2选项
+
+一个rdd分成几个partition，则有几个task，task被分配到节点中，每个节点的executor有几个core，则有几个task可以被并行执行，最大并行度即为节点数*core(虚拟核，并不是每个节点的cpu物理核，但一般虚拟核<=物理核) 
+
+spark广播变量在每个executor存在一个，里面所有的task共用这个副本，这样可以大大减少内存消耗（如果变量很大）以及网络传输（如果task很多）
+Accumulator可以让多个task共同操作一个变量，主要进行累加操作
+
+spark二次排序
+'''
+class SecondSortKey(val first:Int, val Second:Int) extends Ordered[SecondSortKey] with Serializable{
+	def compare(that:SecondarySortKey):Int = {
+		if(this.first - that.first != 0)
+			this.first - that.first
+		else{
+			this.Second - that.Second
+		}
+	}
+}
+val rdd = ...
+val sortRdd = rdd.map(line => new SecondSortKey(line(0),line(1)) -> line)
+'''
+spark topn
