@@ -1,0 +1,66 @@
+scala 学习
+
+private getter setter 方法
+private[this] scala特有，对象私有属性，这种属性只有本对象可以访问，该类的其它对象不能访问。通过这种机制实现实例成员的隔离。
+
+
+trait
+接口使用
+
+为示例对象混入trait
+trait调用链：从右到左执行
+混合使用trait的具体方法和抽象方法
+
+函数式编程
+
+函数赋值给变量：必须在函数后面加空格和下划线
+高阶函数：将函数作为参数，或者作为返回值
+
+SAM single abstract method
+curry化
+
+类型参数
+1.泛型类
+2.上边界Bounds <: 该符号表示是某个类的子类和该类 
+3.下边界Bounds >: 该符号表示是某个类的父类和该类
+4.view Bounds <%  该符号表示，支持对类型进行隐式转换(使用implicit)，并且转换后的类被判断是否在边界指定的范围内，若在则可执行
+5.context Bounds 根据泛型类型的声明，比如“T:类型”，要求必须存在一个类型为“类型[T]”的隐式值，这里的隐式值可由上下文注入
+ class Calculator[T:Ordering](val number1:T,val number2:T) {
+     | def max(implicit order:Ordering[T]) = if(order.compare(number1,number2)>0) number1 else number2}
+
+6.manifest context bounds 在实例化一个数组时候使用，比如
+def dabao[T:Manifest](foods:T*) = {
+     | val packages = new Array[T](foods.length)
+     | for(i<-(0 until foods.length)) packages(i) = foods(i)
+     | packages}
+foods代表多个参数，packages代表数组
+7.协变和逆变 +像上兼容（像子类兼容） -向下兼容（向父类兼容）
+class Card[+T](val name:String) 协变
+8.existential type 存在性类型 Array[T] forsometype{T}
+
+隐式转换与隐式参数
+scala允许通过隐式转换，将某种类型的对象转换为其他类型的对象
+使用隐式转行加强现有类型：可以为某个类定义一个加强版的类，并定义相互之间的隐式转换，从而源类在使用
+加强版的方法时候，由scala将类转为加强类，调用加强版方法
+
+隐式转换作用域：
+1.源类型或目标类型的伴生对象中的隐式转换函数
+2.程序作用域内的可以唯一标示的隐式转换函数
+
+隐式转换发生时机：
+1.调用某个函数，传入参数与函数参数不匹配，这种时候会尝试对传入参数进行转换
+2.调用某个类的方法，发现这个方法在这个类不存在，会尝试对该类进行转换，类似装饰器
+3.调用某个类的方法，这个方法存在，但方法参数与传入参数类型不一致，这种
+情况会尝试对传入参数进行隐式转换
+
+隐式参数
+指的是在一个函数或者方法中，定义一个用implicit修饰的参数，此时scala会尝试找到一个指定类型的，
+用implicit修饰的对象，即隐式值，并注入参数
+scala会在两个地方查找：1.当前作用域可见的val,var定义的隐式变量 2.隐式参数类型的伴生对象中的隐式值
+
+scala Actor 
+scala的多线程编程模型，Actor会尽可能避开锁和共享状态，从而避免并发时出现资源争用的情况，进而提升
+多线程编程的性能
+! 代表异步返回消息
+!？ 同步返回
+!! 可获得返回的信息值存储起来
